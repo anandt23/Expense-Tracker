@@ -113,7 +113,7 @@
         </div>
       </section>
 
-      <footer></footer>
+      <footer>Single-file demo using `localStorage` and `Chart.js`. Open `index.html` in a browser.</footer>
     </main>
   </div>
 
@@ -218,7 +218,7 @@
 
     function getFilteredExpenses(user){ let arr = getExpensesFor(user).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)); const ft = document.getElementById('filter-text').value.toLowerCase(); const cat = document.getElementById('filter-cat').value; const from = document.getElementById('from').value; const to = document.getElementById('to').value; if(ft) arr = arr.filter(x=> (x.desc||'').toLowerCase().includes(ft) || (x.category||'').toLowerCase().includes(ft)); if(cat) arr = arr.filter(x=>x.category===cat); if(from) arr = arr.filter(x=>x.date>=from); if(to) arr = arr.filter(x=>x.date<=to); return arr; }
 
-    function renderTable(arr){ const tbody = document.querySelector('#expenses-table tbody'); tbody.innerHTML=''; arr.forEach(e=>{ const tr = document.createElement('tr'); tr.innerHTML = `<td>₹‎{e.date}</td><td>₹‎{escapeHtml(e.category)}</td><td>₹‎{escapeHtml(e.desc||'')}</td><td>₹₹‎{Number(e.amount).toFixed(2)}</td><td>₹‎{e.recurrence||'none'}</td><td class="right"><button onclick="editExpense('₹‎{e.id}')" class="btn">Edit</button> <button onclick="deleteExpense('₹‎{e.id}')" class="btn danger">Del</button></td>`; tbody.appendChild(tr); }); }
+    function renderTable(arr){ const tbody = document.querySelector('#expenses-table tbody'); tbody.innerHTML=''; arr.forEach(e=>{ const tr = document.createElement('tr'); tr.innerHTML = `<td>${e.date}</td><td>${escapeHtml(e.category)}</td><td>${escapeHtml(e.desc||'')}</td><td>₹${Number(e.amount).toFixed(2)}</td><td>${e.recurrence||'none'}</td><td class="right"><button onclick="editExpense('${e.id}')" class="btn">Edit</button> <button onclick="deleteExpense('${e.id}')" class="btn danger">Del</button></td>`; tbody.appendChild(tr); }); }
 
     function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -229,7 +229,7 @@
       const labels = Object.keys(byCat); const data = Object.values(byCat);
       const ctx = document.getElementById('catChart').getContext('2d');
       if(catChart) catChart.destroy();
-      catChart = new Chart(ctx, { type:'doughnut', data:{ labels, datasets:[{ data, backgroundColor:labels.map((_,i)=>`hsl(₹‎{i*50%360} 70% 60%)`) }] }, options:{plugins:{legend:{position:'right'}}} });
+      catChart = new Chart(ctx, { type:'doughnut', data:{ labels, datasets:[{ data, backgroundColor:labels.map((_,i)=>`hsl(${i*50%360} 70% 60%)`) }] }, options:{plugins:{legend:{position:'right'}}} });
 
       // trend: monthly totals (past 6 months)
       const months = {}; const now = new Date(); for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i,1); const key = d.toISOString().slice(0,7); months[key]=0; }
@@ -246,7 +246,7 @@
 
     document.getElementById('save-budget').onclick = ()=>{ const u = getSession(); if(!u){ alert('Login'); return; } const v = parseFloat(document.getElementById('budget-input').value)||0; setBudget(u,v); renderAll(); };
 
-    function checkBudget(user, arr){ const thisMonth = new Date().toISOString().slice(0,7); const sum = arr.filter(x=>x.date.slice(0,7)===thisMonth).reduce((s,x)=>s+Number(x.amount),0); document.getElementById('total-month').textContent = '₹'+sum.toFixed(2); const b = getBudget(user) || 0; const ba = document.getElementById('budget-alert'); if(b>0 && sum> b){ ba.textContent = `Over budget! Spent ₹₹‎{sum.toFixed(2)} of ₹₹‎{b.toFixed(2)}`; ba.style.color='red'; } else if(b>0){ ba.textContent = `Budget OK: ₹₹‎{b.toFixed(2)}`; ba.style.color='green'; } else { ba.textContent = ''; }
+    function checkBudget(user, arr){ const thisMonth = new Date().toISOString().slice(0,7); const sum = arr.filter(x=>x.date.slice(0,7)===thisMonth).reduce((s,x)=>s+Number(x.amount),0); document.getElementById('total-month').textContent = '₹'+sum.toFixed(2); const b = getBudget(user) || 0; const ba = document.getElementById('budget-alert'); if(b>0 && sum> b){ ba.textContent = `Over budget! Spent ₹${sum.toFixed(2)} of ₹${b.toFixed(2)}`; ba.style.color='red'; } else if(b>0){ ba.textContent = `Budget OK: ₹${b.toFixed(2)}`; ba.style.color='green'; } else { ba.textContent = ''; }
     }
 
     function computeReminders(arr){ const upcoming=[]; const today = new Date(); arr.forEach(e=>{ if(!e.recurrence || e.recurrence==='none') return; // compute next occurrence after last date up to next 30 days
@@ -255,14 +255,14 @@
       const diffDays = Math.ceil((last - today)/(1000*60*60*24)); if(diffDays<=30) upcoming.push({title:e.category, when:last.toISOString().slice(0,10), amount:e.amount});
     }); return upcoming.sort((a,b)=>a.when.localeCompare(b.when)); }
 
-    function renderReminders(arr){ const r = computeReminders(arr); const el = document.getElementById('reminders'); if(!r.length){ el.textContent='No reminders'; return; } el.innerHTML = r.map(x=>`<div><strong>₹‎{x.when}</strong> — ₹‎{escapeHtml(x.title)} ₹₹‎{Number(x.amount).toFixed(2)}</div>`).join(''); }
+    function renderReminders(arr){ const r = computeReminders(arr); const el = document.getElementById('reminders'); if(!r.length){ el.textContent='No reminders'; return; } el.innerHTML = r.map(x=>`<div><strong>${x.when}</strong> — ${escapeHtml(x.title)} ₹${Number(x.amount).toFixed(2)}</div>`).join(''); }
 
     // --- Glue: render everything when logged in ---
     function refreshUI(){ const user = getSession(); if(user){ authLoggedOut.classList.add('hidden'); authLoggedIn.classList.remove('hidden'); curUserSpan.textContent = user; document.getElementById('auth-logged-in').classList.remove('hidden'); document.getElementById('auth-logged-out').classList.add('hidden'); document.getElementById('expense-form').style.display='block'; } else { authLoggedOut.classList.remove('hidden'); authLoggedIn.classList.add('hidden'); document.getElementById('expense-form').style.display='none'; }
       renderAll(); }
 
     function renderAll(){ const user = getSession(); if(!user){ // clear
-        document.querySelector('#expenses-table tbody').innerHTML=''; document.getElementById('catChart').getContext('2d').clearRect(0,0,400,200); document.getElementById('trendChart').getContext('2d').clearRect(0,0,400,120); document.getElementById('reminders').textContent='Login to see reminders'; document.getElementById('budget-input').value=''; document.getElementById('total-month').textContent='₹‎0.00'; return; }
+        document.querySelector('#expenses-table tbody').innerHTML=''; document.getElementById('catChart').getContext('2d').clearRect(0,0,400,200); document.getElementById('trendChart').getContext('2d').clearRect(0,0,400,120); document.getElementById('reminders').textContent='Login to see reminders'; document.getElementById('budget-input').value=''; document.getElementById('total-month').textContent='₹0.00'; return; }
       const all = getExpensesFor(user);
       const filtered = getFilteredExpenses(user);
       const cats = Array.from(new Set(all.map(x=>x.category))).sort(); populateCategoryFilter(cats);
