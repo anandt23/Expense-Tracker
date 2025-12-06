@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Expense Tracker (Single-file Demo)</title>
+  <style>
+    :root{--bg:#f6f8fa;--card:#fff;--muted:#6b7280;--accent:#0ea5a4}
+    body{font-family:Inter,system-ui,Segoe UI,Arial;margin:0;background:var(--bg);color:#0f172a}
+    .wrap{max-width:1100px;margin:28px auto;padding:20px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .card{background:var(--card);padding:16px;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.06)}
+    .grid{display:grid;gap:12px}
+    .cols-3{grid-template-columns:1fr 360px;grid-auto-flow:dense}
+    form .row{display:flex;gap:8px;margin-bottom:8px}
+    input,select,button,textarea{padding:8px;border-radius:8px;border:1px solid #e6edf3}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;text-align:left;border-bottom:1px solid #eef2f7;font-size:14px}
+    .muted{color:var(--muted)}
+    .btn{background:var(--accent);color:white;border:none;padding:8px 10px;border-radius:8px;cursor:pointer}
+    .danger{background:#ef4444}
+    .small{font-size:13px}
+    .top{display:flex;gap:12px;align-items:center}
+    .pill{padding:6px 10px;border-radius:999px;background:#f1f5f9}
+    .hidden{display:none}
+    .flex{display:flex;gap:8px;align-items:center}
+    .right{text-align:right}
+    .search{display:flex;gap:6px}
+    canvas{max-width:100%}
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+    .auth-page{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);display:flex;align-items:center;justify-content:center;z-index:1000}
+    .auth-container{background:white;padding:40px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.2);max-width:400px;width:90%}
+    .auth-container h2{text-align:center;margin-top:0;color:#0f172a}
+    .auth-container input{width:100%;margin-bottom:12px;padding:10px;border:1px solid #e6edf3;border-radius:8px;font-size:14px;box-sizing:border-box}
+    .auth-container .btn{width:100%;margin-bottom:8px}
+    .auth-toggle{text-align:center;margin-top:16px;font-size:13px}
+    .auth-toggle button{background:none;border:none;color:#0ea5a4;cursor:pointer;text-decoration:underline}
+    .auth-msg{margin-top:12px;padding:8px;border-radius:6px;font-size:12px;text-align:center}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Full-page login screen -->
+  <div id="auth-page" class="auth-page">
+    <div class="auth-container">
+      <div id="login-form" class="hidden">
+        <h2>Login</h2>
+        <input id="login-user" type="text" placeholder="Username" />
+        <input id="login-pass" type="password" placeholder="Password" />
+        <button id="login-btn" class="btn">Login</button>
+        <div id="login-msg" class="auth-msg"></div>
+        <div class="auth-toggle">New user? <button id="show-reg-btn" type="button">Register here</button></div>
+      </div>
+
+      <div id="register-form">
+        <h2>Register</h2>
+        <input id="reg-user" type="text" placeholder="Username" />
+        <input id="reg-pass" type="password" placeholder="Password" />
+        <button id="reg-btn" class="btn">Register</button>
+        <div id="reg-msg" class="auth-msg"></div>
+        <div class="auth-toggle">Already have an account? <button id="show-login-btn" type="button">Login here</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-container" class="hidden">
+  <div class="wrap">
+    <header>
+      <h2>Expense Tracker — Demo</h2>
+      <div id="auth-area" class="card small top">
+        <span id="current-user" class="pill"></span>
+        <button id="logout" class="btn" style="background:#ef4444">Logout</button>
+      </div>
+    </header>
+
+    <main class="grid cols-3">
+      <section class="card">
+        <div class="top">
+          <h3 style="margin:0">Dashboard</h3>
+          <div class="muted small">Quick overview</div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:12px">
+          <div class="card" style="flex:1;padding:12px">
+            <div class="muted small">This Month</div>
+            <div id="total-month" style="font-size:20px;font-weight:600">₹0.00</div>
+          </div>
+          <div class="card" style="width:180px;padding:12px">
+            <div class="muted small">Budget (monthly)</div>
+            <div style="display:flex;gap:8px;margin-top:8px"><input id="budget-input" placeholder="0" style="width:100px"/><button id="save-budget" class="btn">Save</button></div>
+            <div id="budget-alert" class="muted small" style="margin-top:8px"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px" class="grid">
+          <canvas id="catChart" height="160"></canvas>
+          <canvas id="trendChart" height="120"></canvas>
+        </div>
+      </section>
+
+      <aside class="card">
+        <h4 style="margin-top:0">Add / Edit Expense</h4>
+        <form id="expense-form">
+          <input type="hidden" id="expense-id" />
+          <div class="row"><input id="date" type="date" required style="flex:1"/></div>
+          <div class="row"><input id="amount" type="number" step="0.01" placeholder="Amount" required style="flex:1"/></div>
+          <div class="row"><input id="category" placeholder="Category (e.g., Food)" required style="flex:1"/></div>
+          <div class="row"><input id="desc" placeholder="Description" style="flex:1"/></div>
+          <div class="row">
+            <select id="recurrence"><option value="none">No recurrence</option><option value="monthly">Monthly</option><option value="weekly">Weekly</option></select>
+            <button type="submit" class="btn">Save</button>
+            <button id="clear-form" type="button" class="btn" style="background:#64748b">Clear</button>
+          </div>
+          <div id="form-msg" class="muted small"></div>
+        </form>
+
+        <hr />
+        <h4 style="margin:6px 0">Reminders</h4>
+        <div id="reminders" class="muted small">No reminders</div>
+      </aside>
+
+      <section class="card" style="grid-column:1 / -1">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h4 style="margin:0">Expenses</h4>
+          <div class="search">
+            <input id="filter-text" placeholder="Search description" />
+            <select id="filter-cat"><option value="">All categories</option></select>
+            <input id="from" type="date" />
+            <input id="to" type="date" />
+            <button id="apply-filters" class="btn">Filter</button>
+            <button id="reset-filters" class="btn" style="background:#64748b">Reset</button>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <table id="expenses-table">
+            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Recurrence</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer>Single-file demo using `localStorage` and `Chart.js`. Open `index.html` in a browser.</footer>
+    </main>
+  </div>
+  </div>
+
+
+
+  <script>
+    // --- Storage keys and helpers ---
+    const USERS_KEY = 'et_users';
+    const SESSION_KEY = 'et_session';
+
+    function getUsers(){ return JSON.parse(localStorage.getItem(USERS_KEY)||'{}'); }
+    function saveUsers(u){ localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+
+    function getExpensesFor(user){ return JSON.parse(localStorage.getItem('expenses_'+user) || '[]'); }
+    function saveExpensesFor(user, arr){ localStorage.setItem('expenses_'+user, JSON.stringify(arr)); }
+
+    function setSession(user){ localStorage.setItem(SESSION_KEY, user); }
+    function getSession(){ return localStorage.getItem(SESSION_KEY); }
+    function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+
+    // --- Auth UI ---
+    const curUserSpan = document.getElementById('current-user');
+    const authPage = document.getElementById('auth-page');
+    const appContainer = document.getElementById('app-container');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+
+    function showLoginForm(){ loginForm.classList.remove('hidden'); registerForm.classList.add('hidden'); }
+    function showRegisterForm(){ registerForm.classList.remove('hidden'); loginForm.classList.add('hidden'); }
+
+    // attach auth buttons safely and log missing elements
+    const elShowLogin = document.getElementById('show-login-btn');
+    const elShowReg = document.getElementById('show-reg-btn');
+    const elRegBtn = document.getElementById('reg-btn');
+    const elLoginBtn = document.getElementById('login-btn');
+    const elLogout = document.getElementById('logout');
+    if(!elShowLogin || !elShowReg || !elRegBtn || !elLoginBtn || !elLogout){
+      console.warn('Auth elements missing:', {elShowLogin:!!elShowLogin, elShowReg:!!elShowReg, elRegBtn:!!elRegBtn, elLoginBtn:!!elLoginBtn, elLogout:!!elLogout});
+    }
+    if(elShowLogin) elShowLogin.addEventListener('click', showLoginForm);
+    if(elShowReg) elShowReg.addEventListener('click', showRegisterForm);
+
+    if(elRegBtn) elRegBtn.addEventListener('click', ()=>{
+      const u = document.getElementById('reg-user').value.trim();
+      const p = document.getElementById('reg-pass').value;
+      const msg = document.getElementById('reg-msg'); msg.textContent='';
+      if(!u||!p){ msg.textContent='Provide username and password'; return; }
+      const users = getUsers();
+      if(users[u]){ msg.textContent='Username taken'; return; }
+      users[u] = { pass: btoa(p) };
+      saveUsers(users);
+      msg.style.color='green';
+      msg.textContent='Registered! Switching to login...';
+      setTimeout(()=>{ showLoginForm(); const lu=document.getElementById('login-user'); if(lu) lu.value=u; const lp=document.getElementById('login-pass'); if(lp) lp.value=''; }, 800);
+    });
+
+    if(elLoginBtn) elLoginBtn.addEventListener('click', ()=>{
+      const u = document.getElementById('login-user').value.trim();
+      const p = document.getElementById('login-pass').value;
+      const msg = document.getElementById('login-msg'); msg.textContent='';
+      const users = getUsers();
+      if(!u || !p){ msg.textContent='Enter username and password'; msg.style.color='red'; return; }
+      if(!users[u] || users[u].pass !== btoa(p)){ msg.textContent='Invalid credentials'; msg.style.color='red'; return; }
+      setSession(u);
+      authPage.classList.add('hidden');
+      appContainer.classList.remove('hidden');
+      refreshUI();
+    });
+
+    if(elLogout) elLogout.addEventListener('click', ()=>{ clearSession(); authPage.classList.remove('hidden'); appContainer.classList.add('hidden'); showLoginForm(); const lu=document.getElementById('login-user'); if(lu) lu.value=''; const lp=document.getElementById('login-pass'); if(lp) lp.value=''; const lmsg=document.getElementById('login-msg'); if(lmsg) lmsg.textContent=''; });
+
+    // --- Expense form CRUD ---
+    const form = document.getElementById('expense-form');
+    form.addEventListener('submit', e=>{ e.preventDefault(); const id = document.getElementById('expense-id').value; const date = document.getElementById('date').value; const amount = parseFloat(document.getElementById('amount').value)||0; const category = document.getElementById('category').value.trim(); const desc = document.getElementById('desc').value.trim(); const recurrence = document.getElementById('recurrence').value; if(!date||!category||!amount){ document.getElementById('form-msg').textContent='Fill required fields'; return; } const user = getSession(); if(!user){ alert('Login first'); return; } let arr = getExpensesFor(user); if(id){ // edit
+        const idx = arr.findIndex(x=>x.id===id);
+        if(idx>=0){ arr[idx] = {...arr[idx], date, amount, category, desc, recurrence}; }
+      } else {
+        arr.push({ id: 'e_'+Date.now(), date, amount, category, desc, recurrence, created: new Date().toISOString() });
+      }
+      saveExpensesFor(user, arr); form.reset(); document.getElementById('expense-id').value=''; document.getElementById('form-msg').textContent='Saved'; renderAll();
+    });
+
+    document.getElementById('clear-form').onclick = ()=>{ form.reset(); document.getElementById('expense-id').value=''; };
+
+    function editExpense(id){ const user = getSession(); if(!user) return; const arr = getExpensesFor(user); const e = arr.find(x=>x.id===id); if(!e) return; document.getElementById('expense-id').value = e.id; document.getElementById('date').value = e.date; document.getElementById('amount').value = e.amount; document.getElementById('category').value = e.category; document.getElementById('desc').value = e.desc; document.getElementById('recurrence').value = e.recurrence||'none'; window.scrollTo(0,0); }
+
+    function deleteExpense(id){ if(!confirm('Delete expense?')) return; const user = getSession(); if(!user) return; let arr = getExpensesFor(user); arr = arr.filter(x=>x.id!==id); saveExpensesFor(user, arr); renderAll(); }
+
+    // --- Filters and rendering ---
+    function populateCategoryFilter(cats){ const sel = document.getElementById('filter-cat'); sel.innerHTML='<option value="">All categories</option>'; cats.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); }); }
+
+    document.getElementById('apply-filters').onclick = ()=>{ renderAll(); };
+    document.getElementById('reset-filters').onclick = ()=>{ document.getElementById('filter-text').value=''; document.getElementById('filter-cat').value=''; document.getElementById('from').value=''; document.getElementById('to').value=''; renderAll(); };
+
+    function getFilteredExpenses(user){ let arr = getExpensesFor(user).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)); const ft = document.getElementById('filter-text').value.toLowerCase(); const cat = document.getElementById('filter-cat').value; const from = document.getElementById('from').value; const to = document.getElementById('to').value; if(ft) arr = arr.filter(x=> (x.desc||'').toLowerCase().includes(ft) || (x.category||'').toLowerCase().includes(ft)); if(cat) arr = arr.filter(x=>x.category===cat); if(from) arr = arr.filter(x=>x.date>=from); if(to) arr = arr.filter(x=>x.date<=to); return arr; }
+
+    function renderTable(arr){ const tbody = document.querySelector('#expenses-table tbody'); tbody.innerHTML=''; arr.forEach(e=>{ const tr = document.createElement('tr'); tr.innerHTML = `<td>${e.date}</td><td>${escapeHtml(e.category)}</td><td>${escapeHtml(e.desc||'')}</td><td>₹${Number(e.amount).toFixed(2)}</td><td>${e.recurrence||'none'}</td><td class="right"><button onclick="editExpense('${e.id}')" class="btn">Edit</button> <button onclick="deleteExpense('${e.id}')" class="btn danger">Del</button></td>`; tbody.appendChild(tr); }); }
+
+    function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // --- Charts ---
+    let catChart, trendChart;
+    function renderCharts(arr){ // category pie/bar
+      const byCat = {}; arr.forEach(e=>{ byCat[e.category] = (byCat[e.category]||0) + Number(e.amount); });
+      const labels = Object.keys(byCat); const data = Object.values(byCat);
+      const ctx = document.getElementById('catChart').getContext('2d');
+      if(catChart) catChart.destroy();
+      catChart = new Chart(ctx, { type:'doughnut', data:{ labels, datasets:[{ data, backgroundColor:labels.map((_,i)=>`hsl(${i*50%360} 70% 60%)`) }] }, options:{plugins:{legend:{position:'right'}}} });
+
+      // trend: monthly totals (past 6 months)
+      const months = {}; const now = new Date(); for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i,1); const key = d.toISOString().slice(0,7); months[key]=0; }
+      arr.forEach(e=>{ const k = e.date.slice(0,7); if(k in months) months[k]+=Number(e.amount); });
+      const mlabels = Object.keys(months); const mdata = Object.values(months);
+      const ctx2 = document.getElementById('trendChart').getContext('2d');
+      if(trendChart) trendChart.destroy();
+      trendChart = new Chart(ctx2, { type:'line', data:{ labels:mlabels, datasets:[{ label:'Total', data:mdata, borderColor:'#0ea5a4', backgroundColor:'rgba(14,165,164,0.12)', fill:true }] }, options:{} });
+    }
+
+    // --- Budget alerts & reminders ---
+    function getBudget(user){ return parseFloat(localStorage.getItem('budget_'+user) || '0'); }
+    function setBudget(user, v){ localStorage.setItem('budget_'+user, String(v)); }
+
+    document.getElementById('save-budget').onclick = ()=>{ const u = getSession(); if(!u){ alert('Login'); return; } const v = parseFloat(document.getElementById('budget-input').value)||0; setBudget(u,v); renderAll(); };
+
+    function checkBudget(user, arr){ const thisMonth = new Date().toISOString().slice(0,7); const sum = arr.filter(x=>x.date.slice(0,7)===thisMonth).reduce((s,x)=>s+Number(x.amount),0); document.getElementById('total-month').textContent = '₹'+sum.toFixed(2); const b = getBudget(user) || 0; const ba = document.getElementById('budget-alert'); if(b>0 && sum> b){ ba.textContent = `Over budget! Spent ₹${sum.toFixed(2)} of ₹${b.toFixed(2)}`; ba.style.color='red'; } else if(b>0){ ba.textContent = `Budget OK: ₹${b.toFixed(2)}`; ba.style.color='green'; } else { ba.textContent = ''; }
+    }
+
+    function computeReminders(arr){ const upcoming=[]; const today = new Date(); arr.forEach(e=>{ if(!e.recurrence || e.recurrence==='none') return; // compute next occurrence after last date up to next 30 days
+      let last = new Date(e.date);
+      while(last < today){ if(e.recurrence==='monthly') last = new Date(last.getFullYear(), last.getMonth()+1, last.getDate()); else if(e.recurrence==='weekly') last = new Date(last.getFullYear(), last.getMonth(), last.getDate()+7); else break; }
+      const diffDays = Math.ceil((last - today)/(1000*60*60*24)); if(diffDays<=30) upcoming.push({title:e.category, when:last.toISOString().slice(0,10), amount:e.amount});
+    }); return upcoming.sort((a,b)=>a.when.localeCompare(b.when)); }
+
+    function renderReminders(arr){ const r = computeReminders(arr); const el = document.getElementById('reminders'); if(!r.length){ el.textContent='No reminders'; return; } el.innerHTML = r.map(x=>`<div><strong>${x.when}</strong> — ${escapeHtml(x.title)} ₹${Number(x.amount).toFixed(2)}</div>`).join(''); }
+
+    // --- Glue: render everything when logged in ---
+    function refreshUI(){ const user = getSession(); if(user){ curUserSpan.textContent = user; document.getElementById('expense-form').style.display='block'; } else { document.getElementById('expense-form').style.display='none'; }
+      renderAll(); }
+
+    function renderAll(){ const user = getSession(); if(!user){ // clear
+        document.querySelector('#expenses-table tbody').innerHTML=''; document.getElementById('catChart').getContext('2d').clearRect(0,0,400,200); document.getElementById('trendChart').getContext('2d').clearRect(0,0,400,120); document.getElementById('reminders').textContent='Login to see reminders'; document.getElementById('budget-input').value=''; document.getElementById('total-month').textContent='₹0.00'; return; }
+      const all = getExpensesFor(user);
+      const filtered = getFilteredExpenses(user);
+      const cats = Array.from(new Set(all.map(x=>x.category))).sort(); populateCategoryFilter(cats);
+      renderTable(filtered);
+      renderCharts(filtered);
+      renderReminders(all);
+      checkBudget(user, all);
+      document.getElementById('budget-input').value = getBudget(user) || '';
+    }
+
+    // expose edit/delete to inline onclick
+    window.editExpense = editExpense; window.deleteExpense = deleteExpense;
+
+    // initial - check if logged in
+    const user = getSession();
+    if(user){ authPage.classList.add('hidden'); appContainer.classList.remove('hidden'); refreshUI(); } else { showRegisterForm(); }
+
+    // friendly helper: create sample data when first registered (optional)
+    (function maybeSeed(){ const users = getUsers(); if(Object.keys(users).length===0){ users['demo'] = {pass: btoa('demo')}; saveUsers(users); saveExpensesFor('demo', [
+        {id:'e1', date: new Date().toISOString().slice(0,10), amount:250, category:'Food', desc:'Lunch', recurrence:'none'},
+        {id:'e2', date: new Date().toISOString().slice(0,10), amount:500, category:'Transport', desc:'Taxi', recurrence:'none'},
+        {id:'e3', date: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0,10), amount:15000, category:'Rent', desc:'Monthly rent', recurrence:'monthly'}
+      ]); }
+    })();
+  </script>
+</body>
+</html>
