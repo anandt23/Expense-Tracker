@@ -36,6 +36,7 @@
     .auth-toggle{text-align:center;margin-top:16px;font-size:13px}
     .auth-toggle button{background:none;border:none;color:#0ea5a4;cursor:pointer;text-decoration:underline}
     .auth-msg{margin-top:12px;padding:8px;border-radius:6px;font-size:12px;text-align:center}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -45,20 +46,24 @@
     <div class="auth-container">
       <div id="login-form" class="hidden">
         <h2>Login</h2>
-        <input id="login-user" type="text" placeholder="Username" />
-        <input id="login-pass" type="password" placeholder="Password" />
-        <button id="login-btn" class="btn">Login</button>
-        <div id="login-msg" class="auth-msg"></div>
-        <div class="auth-toggle">New user? <button id="show-reg-btn" type="button">Register here</button></div>
+        <label for="login-user" class="sr-only">Username</label>
+        <input id="login-user" aria-label="username" type="text" placeholder="Username" />
+        <label for="login-pass" class="sr-only">Password</label>
+        <input id="login-pass" aria-label="password" type="password" placeholder="Password" />
+        <button id="login-btn" class="btn" title="Login">Login</button>
+        <div id="login-msg" class="auth-msg" aria-live="polite"></div>
+        <div class="auth-toggle">New user? <button id="show-reg-btn" type="button" title="Register">Register here</button></div>
       </div>
 
       <div id="register-form">
         <h2>Register</h2>
-        <input id="reg-user" type="text" placeholder="Username" />
-        <input id="reg-pass" type="password" placeholder="Password" />
-        <button id="reg-btn" class="btn">Register</button>
-        <div id="reg-msg" class="auth-msg"></div>
-        <div class="auth-toggle">Already have an account? <button id="show-login-btn" type="button">Login here</button></div>
+        <label for="reg-user" class="sr-only">Username</label>
+        <input id="reg-user" aria-label="username" type="text" placeholder="Username" />
+        <label for="reg-pass" class="sr-only">Password</label>
+        <input id="reg-pass" aria-label="password" type="password" placeholder="Password" />
+        <button id="reg-btn" class="btn" title="Register">Register</button>
+        <div id="reg-msg" class="auth-msg" aria-live="polite"></div>
+        <div class="auth-toggle">Already have an account? <button id="show-login-btn" type="button" title="Login">Login here</button></div>
       </div>
     </div>
   </div>
@@ -81,9 +86,9 @@
         </div>
         <div style="display:flex;gap:12px;margin-top:12px">
           <div class="card" style="flex:1;padding:12px">
-            <div class="muted small">This Month</div>
-            <div id="total-month" style="font-size:20px;font-weight:600">₹0.00</div>
-          </div>
+              <div class="muted small">This Month</div>
+              <div id="total-month" style="font-size:20px;font-weight:600" aria-live="polite">₹0.00</div>
+            </div>
           <div class="card" style="width:180px;padding:12px">
             <div class="muted small">Budget (monthly)</div>
             <div style="display:flex;gap:8px;margin-top:8px"><input id="budget-input" placeholder="0" style="width:100px"/><button id="save-budget" class="btn">Save</button></div>
@@ -92,8 +97,8 @@
         </div>
 
         <div style="margin-top:14px" class="grid">
-          <canvas id="catChart" height="160"></canvas>
-          <canvas id="trendChart" height="120"></canvas>
+          <canvas id="catChart" role="img" aria-label="Category breakdown chart" height="160"></canvas>
+          <canvas id="trendChart" role="img" aria-label="Monthly trend chart" height="120"></canvas>
         </div>
       </section>
 
@@ -101,16 +106,17 @@
         <h4 style="margin-top:0">Add / Edit Expense</h4>
         <form id="expense-form">
           <input type="hidden" id="expense-id" />
-          <div class="row"><input id="date" type="date" required style="flex:1"/></div>
-          <div class="row"><input id="amount" type="number" step="0.01" placeholder="Amount" required style="flex:1"/></div>
-          <div class="row"><input id="category" placeholder="Category (e.g., Food)" required style="flex:1"/></div>
-          <div class="row"><input id="desc" placeholder="Description" style="flex:1"/></div>
+          <div class="row"><label for="date" class="sr-only">Date</label><input id="date" aria-label="expense date" type="date" required style="flex:1" placeholder="YYYY-MM-DD"/></div>
+          <div class="row"><label for="amount" class="sr-only">Amount in INR</label><input id="amount" aria-label="amount in rupees" type="number" step="0.01" placeholder="Amount (₹)" required style="flex:1"/></div>
+          <div class="row"><label for="category" class="sr-only">Category</label><input id="category" aria-label="category" placeholder="Category (e.g., Food)" required style="flex:1"/></div>
+          <div class="row"><label for="desc" class="sr-only">Description</label><input id="desc" aria-label="description" placeholder="Description" style="flex:1"/></div>
           <div class="row">
-            <select id="recurrence"><option value="none">No recurrence</option><option value="monthly">Monthly</option><option value="weekly">Weekly</option></select>
-            <button type="submit" class="btn">Save</button>
-            <button id="clear-form" type="button" class="btn" style="background:#64748b">Clear</button>
+            <label for="recurrence" class="sr-only">Recurrence</label>
+            <select id="recurrence" aria-label="recurrence"><option value="none">No recurrence</option><option value="monthly">Monthly</option><option value="weekly">Weekly</option></select>
+            <button type="submit" class="btn" title="Save expense">Save</button>
+            <button id="clear-form" type="button" class="btn" title="Clear form" style="background:#64748b">Clear</button>
           </div>
-          <div id="form-msg" class="muted small"></div>
+          <div id="form-msg" class="muted small" aria-live="polite"></div>
         </form>
 
         <hr />
@@ -122,12 +128,16 @@
         <div style="display:flex;justify-content:space-between;align-items:center">
           <h4 style="margin:0">Expenses</h4>
           <div class="search">
-            <input id="filter-text" placeholder="Search description" />
-            <select id="filter-cat"><option value="">All categories</option></select>
-            <input id="from" type="date" />
-            <input id="to" type="date" />
-            <button id="apply-filters" class="btn">Filter</button>
-            <button id="reset-filters" class="btn" style="background:#64748b">Reset</button>
+            <label for="filter-text" class="sr-only">Search description</label>
+            <input id="filter-text" aria-label="search description" placeholder="Search description" />
+            <label for="filter-cat" class="sr-only">Filter by category</label>
+            <select id="filter-cat" aria-label="filter by category"><option value="">All categories</option></select>
+            <label for="from" class="sr-only">From date</label>
+            <input id="from" aria-label="from date" type="date" />
+            <label for="to" class="sr-only">To date</label>
+            <input id="to" aria-label="to date" type="date" />
+            <button id="apply-filters" class="btn" title="Apply filters">Filter</button>
+            <button id="reset-filters" class="btn" title="Reset filters" style="background:#64748b">Reset</button>
           </div>
         </div>
 
@@ -237,7 +247,7 @@
 
     function getFilteredExpenses(user){ let arr = getExpensesFor(user).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)); const ft = document.getElementById('filter-text').value.toLowerCase(); const cat = document.getElementById('filter-cat').value; const from = document.getElementById('from').value; const to = document.getElementById('to').value; if(ft) arr = arr.filter(x=> (x.desc||'').toLowerCase().includes(ft) || (x.category||'').toLowerCase().includes(ft)); if(cat) arr = arr.filter(x=>x.category===cat); if(from) arr = arr.filter(x=>x.date>=from); if(to) arr = arr.filter(x=>x.date<=to); return arr; }
 
-    function renderTable(arr){ const tbody = document.querySelector('#expenses-table tbody'); tbody.innerHTML=''; arr.forEach(e=>{ const tr = document.createElement('tr'); tr.innerHTML = `<td>${e.date}</td><td>${escapeHtml(e.category)}</td><td>${escapeHtml(e.desc||'')}</td><td>₹${Number(e.amount).toFixed(2)}</td><td>${e.recurrence||'none'}</td><td class="right"><button onclick="editExpense('${e.id}')" class="btn">Edit</button> <button onclick="deleteExpense('${e.id}')" class="btn danger">Del</button></td>`; tbody.appendChild(tr); }); }
+    function renderTable(arr){ const tbody = document.querySelector('#expenses-table tbody'); tbody.innerHTML=''; arr.forEach(e=>{ const tr = document.createElement('tr'); tr.innerHTML = `<td>${e.date}</td><td>${escapeHtml(e.category)}</td><td>${escapeHtml(e.desc||'')}</td><td>₹${Number(e.amount).toFixed(2)}</td><td>${e.recurrence||'none'}</td><td class="right"><button aria-label="Edit expense" onclick="editExpense('${e.id}')" class="btn">Edit</button> <button aria-label="Delete expense" onclick="deleteExpense('${e.id}')" class="btn danger">Delete</button></td>`; tbody.appendChild(tr); }); }
 
     function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
