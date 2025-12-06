@@ -2,8 +2,7 @@
 
 A single-file, client-side expense tracker demo implemented as `index.html`.
 
-This demo provides a simple local-only expense tracker with authentication (stored in `localStorage`), expense CRUD, charts, budget alerts, recurring reminders, filtering/search, and a dashboard. All currency is in Indian Rupees (₹). The workspace is now clean: only `index.html` and this README remain.
-
+This demo provides a simple local-only expense tracker with authentication (stored in `localStorage`), expense CRUD, charts, budget alerts, recurring reminders, filtering/search, and a dashboard. All currency is in Indian Rupees (₹). 
 ## Features
 - Authentication (register / login) stored in `localStorage` under the key `et_users` and session under `et_session`.
 - Per-user expenses saved under `expenses_<username>` in `localStorage`.
@@ -55,8 +54,3 @@ The demo account is pre-seeded with sample expenses in Indian Rupees (₹): food
 - Add CSV import/export (recommended next step) to backup and restore data.
 - Convert to a tiny Flask or Node app to persist data server-side and add proper authentication.
 
-## Contact
-If you want more features, tests, or a server-backed conversion, tell me which direction you'd like and I can implement it.
-
----
-Generated/updated by GitHub Copilot on Dec 6, 2025.
